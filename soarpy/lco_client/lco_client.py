@@ -147,6 +147,7 @@ class LCOClient:
                 if frame["instrument_id"].lower() in Constants.OBSMODE_INSTRUMENTS['photometry']
                 and frame["proposal_id"] == "calibrate"
                 and frame["configuration_type"].lower() == "bias"
+                and frame["RLEVEL"] == 0
             ]
         except KeyError as e:
             logger.error(f"KeyError while filtering photometric bias frames: {e}")
@@ -159,6 +160,7 @@ class LCOClient:
                 if frame["instrument_id"].lower() in Constants.OBSMODE_INSTRUMENTS['photometry']
                 and frame["proposal_id"] == "calibrate"
                 and frame["configuration_type"].lower() == "lampflat"
+                and frame["RLEVEL"] == 0
             ]
         except KeyError as e:
             logger.error(f"KeyError while filtering photometric flat frames: {e}")
@@ -171,6 +173,7 @@ class LCOClient:
                 if frame["instrument_id"].lower() in Constants.OBSMODE_INSTRUMENTS['photometry']
                 and frame["proposal_id"] != "calibrate"
                 and frame["configuration_type"].lower() == "expose"
+                and frame["RLEVEL"] == 0
             ]
         except KeyError as e:
             logger.error(f"KeyError while filtering photometric science frames: {e}")
@@ -180,7 +183,7 @@ class LCOClient:
         try:
             return [
                 frame for frame in frames
-                if frame["configuration_type"].lower() == "spectrum"
+                if "Calibration-Star" in frame["filename"]
                 and frame["proposal_id"] == "calibrate"
                 and frame["RLEVEL"] == 0
             ]
@@ -194,6 +197,7 @@ class LCOClient:
                 frame for frame in frames
                 if frame["configuration_type"].lower() == "arc"
                 and frame["RLEVEL"] == 0
+                and frame["proposal_id"] != "calibrate"
             ]
         except KeyError as e:
             logger.error(f"KeyError while filtering spectroscopic arc frames: {e}")
@@ -216,6 +220,7 @@ class LCOClient:
             return [
                 frame for frame in frames
                 if frame["configuration_type"].lower() == "lampflat"
+                and frame["instrument_id"].lower() in Constants.OBSMODE_INSTRUMENTS['spectroscopy']
                 and frame["RLEVEL"] == 0
                 and Constants.REQUIRED_CCD_BINNING in frame["filename"]
                 and "slit" not in frame["filename"]
