@@ -4,16 +4,16 @@ from enum import Enum
 
 import requests
 from astropy.time import Time
-from rich.console import Console
-from rich.logging import RichHandler
 from rich.table import Table
 from rich import box
 
 from astropy import units as u
+from rich.console import Console
 
+console = Console()  # keep this, needed for the spinner
 
-logger = logging.getLogger(__name__)
-console = Console()
+from soar_dps.logger import get_logger
+logger = get_logger(__name__)
 
 
 class Constants:
@@ -67,9 +67,15 @@ class LCOClient:
         Split a time range into 1-day windows for paginated queries.
         Times should be ISO format strings (e.g. '2024-01-01T00:00:00').
         """
+        if "T" not in start_time:
+            start_time = f"{start_time}T00:00:00"
+        if "T" not in end_time:
+            end_time = f"{end_time}T23:59:59"
+
         try:
-            tstart_jd = Time(start_time, format="isot").jd
-            tend_jd = Time(end_time, format="isot").jd
+            tstart_jd = Time(start_time).jd
+            tend_jd = Time(end_time).jd
+            logger.info(f"Parsed start time: {start_time} (JD: {tstart_jd}), end time: {end_time} (JD: {tend_jd})")
         except Exception as e:
             logger.error(f"Error parsing time strings: {e}")
             raise ValueError("Invalid time format. Please provide ISO format strings (e.g. '2024-01-01T00:00:00').")
@@ -136,7 +142,7 @@ class LCOClient:
 
                 all_frames.extend(frames)
 
-        logger.info(f"Retrieved {len(all_frames)} frames for {tstart} to {tstop}.")
+        logger.info(f"Retrieved a total of {len(all_frames)} frames for {tstart} to {tstop}. Selected frames will be filtered based on the requested mode and frame types.")
         return all_frames
 
 
@@ -343,6 +349,11 @@ class LCOClient:
             logger.error(f"Unknown mode '{mode}' for getting calibration frames. Accepted modes are 'photometry' and 'spectroscopy'.")
             return []
         
+
+    @staticmethod
+    def get_frame_band(frame):
+        """Return the filter/optical element for a frame, or 'unknown' if absent."""
+        return frame.get("primary_optical_element") or frame.get("FILTER") or "unknown"
 
     def get_lco_reduced_frames(self, frames, mode):
         if mode == 'photometry':
