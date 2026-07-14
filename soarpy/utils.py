@@ -1,5 +1,13 @@
-def _stats(lco_token: str, headers: dict) -> None: #FIXME in dev
+import requests
+from rich.console import Console
+from rich.table import Table
 
+from soarpy.logger import get_logger
+
+logger = get_logger(__name__)
+
+
+def _stats(lco_token: str, headers: dict) -> None: #FIXME in dev
 
     proposals_response = requests.get('https://observe.lco.global/api/proposals/', headers=headers)
     proposals_data = proposals_response.json()
